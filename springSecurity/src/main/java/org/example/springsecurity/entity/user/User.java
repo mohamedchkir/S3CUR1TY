@@ -1,7 +1,8 @@
-package org.example.springsecurity.user;
+package org.example.springsecurity.entity.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.springsecurity.Const.enums.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
