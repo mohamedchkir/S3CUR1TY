@@ -48,6 +48,29 @@ public class AuthenticationService {
                 .authenticationToken(jwtToken).build();
     }
 
+
+
+    public AuthenticationResponse authenticate(AuthenticationRequest request ) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        var user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        Map<String, Object> claims = new HashMap<>();
+        String token = jwtService.generateToken(claims,user);
+        revokeUserTokens(user);
+        saveUserToken(user, token);
+        return AuthenticationResponse.builder()
+                .authenticationToken(token).build();
+    }
+
+    private void revokeUserTokens(User user) {
+        var tokens = tokenRepository.findAllValidByUserId(user.getId());
+        if (tokens.isEmpty()) return;
+
+        tokens.forEach(token -> {
+            token.setRevoked(true);
+            token.setExpired(true);
+        });
+        tokenRepository.saveAll(tokens);
+    }
     private void saveUserToken(User savedUser, String jwtToken) {
         var token = Token.builder()
                 .user(savedUser)
@@ -59,13 +82,4 @@ public class AuthenticationService {
         tokenRepository.save(token);
     }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request ) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        var user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
-        Map<String, Object> claims = new HashMap<>();
-        String token = jwtService.generateToken(claims,user);
-        saveUserToken(user, token);
-        return AuthenticationResponse.builder()
-                .authenticationToken(token).build();
-    }
 }
