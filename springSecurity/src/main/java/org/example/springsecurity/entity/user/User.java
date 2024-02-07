@@ -3,6 +3,7 @@ package org.example.springsecurity.entity.user;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.springsecurity.Const.enums.Role;
+import org.example.springsecurity.entity.token.Token;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,11 +22,15 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue
     private Integer id;
-    private String username;
+    private String firstName;
+    private String lastName;
     private String password;
     private String email;
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(mappedBy = "user")
+    private List<Token> tokens;
 
     public String getUsername() {
         return email;
