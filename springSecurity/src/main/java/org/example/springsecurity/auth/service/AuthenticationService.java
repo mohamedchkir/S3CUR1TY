@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,8 +45,12 @@ public class AuthenticationService {
 
         saveUserToken(savedUser, jwtToken);
 
+        var expirationDate = getExpirationDateFromToken(jwtToken);
+
         return AuthenticationResponse.builder()
-                .authenticationToken(jwtToken).build();
+                .authenticationToken(jwtToken)
+                .expireAt(expirationDate)
+                .build();
     }
 
 
@@ -57,8 +62,12 @@ public class AuthenticationService {
         String token = jwtService.generateToken(claims,user);
         revokeUserTokens(user);
         saveUserToken(user, token);
+        var expirationDate = getExpirationDateFromToken(token);
+
         return AuthenticationResponse.builder()
-                .authenticationToken(token).build();
+                .authenticationToken(token)
+                .expireAt(expirationDate)
+                .build();
     }
 
     private void revokeUserTokens(User user) {
@@ -80,6 +89,10 @@ public class AuthenticationService {
                 .tokenType(TokenType.BEARER)
                 .build();
         tokenRepository.save(token);
+    }
+
+    private Date getExpirationDateFromToken(String token) {
+        return jwtService.getFormattedExpirationDateFromToken(token);
     }
 
 }

@@ -9,6 +9,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
@@ -63,4 +66,9 @@ public class JwtService {
     }
 
 
+    public Date getFormattedExpirationDateFromToken(String token) {
+        return extractClaim(token, Claims::getExpiration);
+
+    }
 }
+
