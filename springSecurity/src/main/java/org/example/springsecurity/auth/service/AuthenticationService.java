@@ -1,5 +1,8 @@
 package org.example.springsecurity.auth.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.springsecurity.Const.enums.Role;
 import org.example.springsecurity.Const.enums.TokenType;
@@ -11,11 +14,13 @@ import org.example.springsecurity.entity.token.Token;
 import org.example.springsecurity.entity.user.User;
 import org.example.springsecurity.repository.TokenRepository;
 import org.example.springsecurity.repository.UserRepository;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,13 +48,16 @@ public class AuthenticationService {
         Map<String, Object> claims = new HashMap<>();
         String jwtToken = jwtService.generateToken(claims,user);
 
+        var refreshToken = jwtService.generateRefreshToken(user);
+
         saveUserToken(savedUser, jwtToken);
 
         var expirationDate = getExpirationDateFromToken(jwtToken);
 
         return AuthenticationResponse.builder()
-                .authenticationToken(jwtToken)
+                .accessToken(jwtToken)
                 .expireAt(expirationDate)
+                .refreshToken(refreshToken)
                 .build();
     }
 
@@ -62,11 +70,13 @@ public class AuthenticationService {
         String token = jwtService.generateToken(claims,user);
         revokeUserTokens(user);
         saveUserToken(user, token);
+        var refreshToken = jwtService.generateRefreshToken(user);
         var expirationDate = getExpirationDateFromToken(token);
 
         return AuthenticationResponse.builder()
-                .authenticationToken(token)
+                .accessToken(token)
                 .expireAt(expirationDate)
+                .refreshToken(refreshToken)
                 .build();
     }
 
@@ -95,4 +105,32 @@ public class AuthenticationService {
         return jwtService.getFormattedExpirationDateFromToken(token);
     }
 
+    public void refresh(HttpServletRequest request,
+                        HttpServletResponse response) throws IOException {
+        final String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String refreshToken;
+        final String userEmail;
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return;
+        }
+        refreshToken = authorizationHeader.substring(7);
+        userEmail = jwtService.extractUsername(refreshToken);
+        if (userEmail != null) {
+            var user = userRepository.findByEmail(userEmail).orElseThrow(() -> new RuntimeException("User not found"));
+            if (jwtService.validateToken(refreshToken, user)) {
+                var accessToken = jwtService.generateToken(new HashMap<>(), user);
+                revokeUserTokens(user);
+                saveUserToken(user, accessToken);
+                var authResponse = AuthenticationResponse.builder()
+                        .accessToken(accessToken)
+                        .refreshToken(refreshToken)
+                        .expireAt(getExpirationDateFromToken(accessToken))
+                        .build();
+                new ObjectMapper().writeValue(response.getOutputStream(),authResponse);
+            }
+
+        }
+
+    }
 }

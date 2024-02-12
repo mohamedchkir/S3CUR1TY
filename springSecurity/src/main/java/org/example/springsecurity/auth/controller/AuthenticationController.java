@@ -1,5 +1,7 @@
 package org.example.springsecurity.auth.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.springsecurity.auth.request.AuthenticationRequest;
 import org.example.springsecurity.auth.request.RegisterRequest;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.io.IOException;
 
 @Controller
 @RequestMapping("/api/v1/auth")
@@ -26,6 +30,12 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> register(@RequestBody AuthenticationRequest request){
          return ResponseEntity.ok(authenticationService.authenticate(request));
 
+    }
+
+    @PostMapping("/refresh")
+    public void refresh(HttpServletRequest request,
+                        HttpServletResponse response) throws IOException {
+        authenticationService.refresh(request,response);
     }
 
 }
