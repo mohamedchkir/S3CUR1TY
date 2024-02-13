@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,6 +22,7 @@ import static org.springframework.http.HttpMethod.*;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -32,13 +34,17 @@ public class SecurityConfig {
         httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/v1/auth/**")
                         .permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole(ADMIN.name(), SUPER_ADMIN.name())
-                        .requestMatchers("/api/v1/superAdmin/**").hasRole(SUPER_ADMIN.name())
                         .requestMatchers("/api/v1/user/**").hasAnyRole(USER.name(),ADMIN.name(),SUPER_ADMIN.name())
                         .requestMatchers(GET,"/api/v1/user/**").hasAnyAuthority(USER_READ.name(),ADMIN_READ.name(),SUPER_ADMIN_READ.name())
                         .requestMatchers(POST,"/api/v1/user/**").hasAnyAuthority(USER_WRITE.name(),ADMIN_WRITE.name(),SUPER_ADMIN_WRITE.name())
                         .requestMatchers(DELETE,"/api/v1/user/**").hasAnyAuthority(USER_DELETE.name(),ADMIN_DELETE.name(),SUPER_ADMIN_DELETE.name())
                         .requestMatchers(PUT,"/api/v1/user/**").hasAnyAuthority(USER_UPDATE.name(),ADMIN_UPDATE.name(),SUPER_ADMIN_UPDATE.name())
+
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole(ADMIN.name(), SUPER_ADMIN.name())
+                        .requestMatchers(GET,"/api/v1/admin/**").hasAnyAuthority(ADMIN_READ.name(),SUPER_ADMIN_READ.name())
+                        .requestMatchers(POST,"/api/v1/admin/**").hasAnyAuthority(ADMIN_WRITE.name(),SUPER_ADMIN_WRITE.name())
+                        .requestMatchers(DELETE,"/api/v1/admin/**").hasAnyAuthority(ADMIN_DELETE.name(),SUPER_ADMIN_DELETE.name())
+                        .requestMatchers(PUT,"/api/v1/admin/**").hasAnyAuthority(ADMIN_UPDATE.name(),SUPER_ADMIN_UPDATE.name())
                         .anyRequest()
                         .authenticated())
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
