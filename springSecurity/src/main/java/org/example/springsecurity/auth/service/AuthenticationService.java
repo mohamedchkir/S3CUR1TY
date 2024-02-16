@@ -10,6 +10,7 @@ import org.example.springsecurity.auth.request.AuthenticationRequest;
 import org.example.springsecurity.auth.request.RegisterRequest;
 import org.example.springsecurity.auth.response.AuthenticationResponse;
 import org.example.springsecurity.config.JwtService;
+import org.example.springsecurity.dto.UserDto;
 import org.example.springsecurity.entity.token.Token;
 import org.example.springsecurity.entity.user.User;
 import org.example.springsecurity.repository.TokenRepository;
@@ -17,6 +18,9 @@ import org.example.springsecurity.repository.UserRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -127,10 +131,11 @@ public class AuthenticationService {
                         .refreshToken(refreshToken)
                         .expireAt(getExpirationDateFromToken(accessToken))
                         .build();
-                new ObjectMapper().writeValue(response.getOutputStream(),authResponse);
+                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
 
         }
+    }
 
     }
-}
+
